@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def fade(t):
+    # Затухание
+    return t * t * t * (t * (t * 6 - 15) + 10)
+
+def grad(hash, x, y):
+    # Градиент
+    h = hash & 3
+    u = x if h < 2 else y
+    v = y if h < 2 else x
+    return (u if h & 1 == 0 else -u) + (v if h & 2 == 0 else -v)
+
+def perlin(x, y, p):
+    # Основная функция
+    xi = int(x) & 255
+    yi = int(y) & 255
+
+    xf = x - int(x)
+    yf = y - int(y)
+
+    u = fade(xf)
+    v = fade(yf)
+
+    aa = p[p[xi] + yi]
+    ab = p[p[xi] + yi + 1]
+    ba = p[p[xi + 1] + yi]
+    bb = p[p[xi + 1] + yi + 1]
+
+    x1 = lerp(grad(aa, xf, yf), grad(ba, xf - 1, yf), u)
+    x2 = lerp(grad(ab, xf, yf - 1), grad(bb, xf - 1, yf - 1), u)
+
+    return (lerp(x1, x2, v) + 1) / 2  # Нормализую
+
+def lerp(a, b, t):
+    # Линейная интерполяция
+    return a + t * (b - a)
+
+def generate_perlin_noise(width, height, scale):
+    # Генерирую шум Перлина
+    p = np.arange(256, dtype=int)
+    np.random.shuffle(p)
+    p = np.stack([p, p]).flatten()  # Дублирую массив для упрощения индексации
+
+    noise = np.zeros((height, width))
+
+    for y in range(height):
+        for x in range(width):
+            noise[y][x] = perlin(x / scale, y / scale, p)
+
+    return noise
+
+# Изображение
+width = 512
+height = 512
+scale = 100.0
+
+# Шум Перлина
+perlin_noise = generate_perlin_noise(width, height, scale)
+
+plt.imshow(perlin_noise, cmap='gray')
+plt.axis('off')
+plt.savefig(r"C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки шумов\Perlin-Noise-Custom.png", bbox_inches='tight', pad_inches=0)
+plt.show()
