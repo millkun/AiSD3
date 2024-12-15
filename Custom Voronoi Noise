@@ -1,0 +1,26 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def generate_voronoi_noise(size, num_points):
+    points = np.random.rand(num_points, 2) * size # Случайные точки
+    voronoi_image = np.zeros((size, size))
+    
+    for i in range(size):
+        for j in range(size):
+            distances = np.linalg.norm(points - np.array([i, j]), axis=1)
+            nearest_point_index = np.argmin(distances)
+            voronoi_image[i, j] = nearest_point_index
+    
+    return voronoi_image
+
+size = 512
+num_points = 20
+
+voronoi_image = generate_voronoi_noise(size, num_points)
+
+plt.figure(figsize=(10, 10))
+plt.imshow(voronoi_image, cmap='gray', interpolation='nearest')
+plt.title('Шум Вороного')
+plt.axis('off')
+plt.savefig(r'C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки шумов\Voronoi-Noise-Custom.png', bbox_inches='tight', pad_inches=0)
+plt.show()
