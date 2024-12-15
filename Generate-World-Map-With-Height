@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from perlin_noise import PerlinNoise
+import os
+
+# -=-=-=- Константы программы -=-=-=-
+# Параметры карты
+width, height = 150, 150
+scale = 100.0
+octaves = 3
+persistence = 0.5
+lacunarity = 2.0
+seed = np.random.randint(0, 100)
+# Пороги
+threshold = 0.5  # Разграничиваем землю и воду
+ocean = 0.4  # Это для океана
+deep_ocean = 0.25  # Это для глубокого океана
+hill = 0.6 # Это для холмиков
+mountain = 0.75 # Это для гор
+# Константы цветов - нормализованные RGB
+color_water = [15/255, 155/255, 255/255]
+color_ocean = [15/255, 55/255, 255/255]
+color_deep_ocean = [0, 29/255, 173/255]
+color_land_low = [0, 173/255, 6/255]
+color_land_hill = [165/255, 125/255, 80/255]
+color_land_mountain = [168/255, 58/255, 43/255]
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# Шум Перлина
+noise = PerlinNoise(octaves=octaves, seed=seed)
+noise_map = np.zeros((width, height))
+
+for y in range(height):
+    for x in range(width):
+        noise_map[x][y] = noise([x/scale, y/scale])
+
+# Нормализую
+noise_map = (noise_map - np.min(noise_map)) / (np.max(noise_map) - np.min(noise_map))
+
+# Белый шум
+white_noise = np.random.rand(width, height)
+
+# Комбинирую
+combined_noise = 0.8 * noise_map + 0.2 * white_noise
+
+# Маски для высот
+mountain_mask = combined_noise > mountain
+hill_mask = (combined_noise <= mountain) & (combined_noise > hill)
+land_mask = (combined_noise <= hill) & (combined_noise > threshold)
+sea_mask = (combined_noise > ocean) & (combined_noise <= threshold)
+ocean_mask = (combined_noise > deep_ocean) & (combined_noise <= ocean)
+deep_ocean_mask = combined_noise <= deep_ocean
+
+# Создание карты
+map_image = np.zeros((width, height, 3))
+map_image[sea_mask] = color_water  # Вода
+map_image[ocean_mask] = color_ocean  # Океан
+map_image[deep_ocean_mask] = color_deep_ocean  # Глубокий океан
+map_image[land_mask] = color_land_low # Низина
+map_image[hill_mask] = color_land_hill # Холмик
+map_image[mountain_mask] = color_land_mountain # Гора
+
+plt.imshow(map_image)
+plt.axis('off')
+save_dir = r"C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки генерации"
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
+save_path = os.path.join(save_dir, "generated_map-height.png")
+plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+
+plt.show()
