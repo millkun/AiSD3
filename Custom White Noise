@@ -1,0 +1,17 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def generate_white_noise(size):
+    noise = np.random.rand(size, size)
+    return noise
+
+size = 256
+
+white_noise_image = generate_white_noise(size)
+
+plt.figure(figsize=(10, 10))
+plt.imshow(white_noise_image, cmap='gray')
+plt.title('Белый шум')
+plt.axis('off')
+plt.savefig(r'C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки шумов\White-Noise-Custom.png', bbox_inches='tight', pad_inches=0.1)
+plt.show()
