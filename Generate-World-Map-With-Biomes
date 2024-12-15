@@ -1,0 +1,92 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from perlin_noise import PerlinNoise
+import os
+
+# -=-=-=- Константы программы -=-=-=-
+# Параметры карты
+width, height = 150, 150
+scale = 100.0
+octaves = 3
+persistence = 0.5
+lacunarity = 2.0
+seed = np.random.randint(0, 100)
+# Пороги
+threshold = 0.5 # Разграничиваем землю и воду
+ocean = 0.4 # Это для океана
+deep_ocean = 0.25 # Это для глубокого океана
+# Пороговые значения для биомов
+biome_threshold_hot = 0.8
+biome_threshold_warm = 0.6
+biome_threshold_cool = 0.3
+biome_threshold_cold = 0.1
+# Константы цветов - нормализованные RGB
+color_water = [15/255, 155/255, 255/255]
+color_ocean = [15/255, 55/255, 255/255]
+color_deep_ocean = [0, 29/255, 173/255]
+color_biome_hot = [245/255, 192/255, 2/255]
+color_biome_warm = [0, 173/255, 6/255]
+color_biome_cold = [158/255, 219/255, 143/255]
+color_biome_freeze = [145/255, 171/255, 255/255]
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# Шум Перлина
+noise = PerlinNoise(octaves=octaves, seed=seed)
+noise_map = np.zeros((width, height))
+
+for y in range(height):
+    for x in range(width):
+        noise_map[x][y] = noise([x/scale, y/scale])
+
+# Шум Перлина для биомов
+noise1 = PerlinNoise(octaves=(octaves+1), seed=seed)
+biome_noise_map = np.zeros((width, height))
+
+for y in range(height):
+    for x in range(width):
+        biome_noise_map[x][y] = noise1([x/(scale - 30), y/(scale - 30)])
+
+# Нормализация шумов
+noise_map = (noise_map - np.min(noise_map)) / (np.max(noise_map) - np.min(noise_map))
+biome_noise_map = (biome_noise_map - np.min(biome_noise_map)) / (np.max(biome_noise_map) - np.min(biome_noise_map))
+
+# Белый шум тут
+white_noise = np.random.rand(width, height)
+
+# Комбинирую
+combined_noise = 0.8 * noise_map + 0.2 * white_noise
+
+# Маски
+land_mask = combined_noise > threshold
+sea_mask = (combined_noise > ocean) & (combined_noise < threshold)
+ocean_mask = (combined_noise > deep_ocean) & (combined_noise < ocean)
+deep_ocean_mask = combined_noise < deep_ocean
+
+# Тут создаю карту
+map_image = np.zeros((width, height, 3))
+#map_image[land_mask] = [0, 173/255, 6/255]  # Земля
+map_image[sea_mask] = color_water  # Вода
+map_image[ocean_mask] = color_ocean # Океан
+map_image[deep_ocean_mask] = color_deep_ocean # Глубокий океан
+
+# Добавляю биомы
+for y in range(height):
+    for x in range(width):
+        if land_mask[x, y]:
+            if (biome_noise_map[x, y] > biome_threshold_hot):
+                map_image[x, y] = color_biome_hot  # Жаркий биом
+            elif biome_noise_map[x, y] > biome_threshold_warm:
+                map_image[x, y] = color_biome_warm  # Тёплый биом
+            elif biome_noise_map[x, y] > biome_threshold_cool:
+                map_image[x, y] = color_biome_cold  # Прохладный биом
+            else:
+                map_image[x, y] = color_biome_freeze  # Морозный биом
+
+plt.imshow(map_image)
+plt.axis('off')
+save_dir = r"C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки генерации"
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
+save_path = os.path.join(save_dir, "generated_map.png")
+plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+plt.show()
