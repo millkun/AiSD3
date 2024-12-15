@@ -1,0 +1,27 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def wavelet_noise(size, octaves, persistence):
+    noise = np.zeros((size, size))
+
+    for octave in range(octaves):
+        frequency = 2 ** octave
+        amplitude = persistence ** octave
+        for y in range(size):
+            for x in range(size):
+                noise[y, x] += amplitude * np.sin(frequency * (x + y))
+    noise = (noise - np.min(noise)) / (np.max(noise) - np.min(noise))
+    return noise
+
+size = 256
+octaves = 3
+persistence = 0.5
+
+wavelet_noise_image = wavelet_noise(size, octaves, persistence)
+
+plt.figure(figsize=(10, 10))
+plt.imshow(wavelet_noise_image, cmap='gray')
+plt.title('Шум волн')
+plt.axis('off')
+plt.savefig(r'C:\Users\jeb32\OneDrive\Рабочий стол\Всякое\АиСД\КурсоваяМайнкрафт\Картинки шумов\Wavelet-Noise-Custom.png', bbox_inches='tight', pad_inches=0.1)
+plt.show()
